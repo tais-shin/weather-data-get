@@ -1,0 +1,96 @@
+Text cell <undefined>
+# %% [markdown]
+氣象資料統一松山站
+空氣資料有7個站 分別'松山', '萬華', '陽明', '士林', '古亭', '中山', '大同'
+空氣測站時間不是及時，我做延遲2小時
+
+Code cell <undefined>
+# %% [code]
+import requests
+import time
+import datetime
+a = ['松山', '萬華', '陽明', '士林', '古亭', '中山', '大同']
+
+name = input("輸入站名") #輸入(下拉式選單)
+
+def st(): #觀測站資料產生器
+
+
+    #請求API資料 天氣資料統一松山站   
+    URL = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/{dataid}?Authorization={apikey}&stationId={location}'
+    url = URL.format(dataid="O-A0001-001", apikey="CWB-C0883720-4E1F-4495-8867-969F8DC98396", location= "C0AH70")
+    res = requests.get(url)
+
+    content = res.json()
+    
+    if content["records"]["location"]==[]: 
+        print("空資料")
+        
+    Stno =  content["records"]["location"][0]["stationId"]#站號
+    Datetime = content["records"]["location"][0]["time"]["obsTime"]#時間
+    PS01 = content["records"]["location"][0]["weatherElement"][5]["elementValue"]#氣壓
+    TX01 = content["records"]["location"][0]["weatherElement"][3]["elementValue"]#溫度
+    WD01 = content["records"]["location"][0]["weatherElement"][2]["elementValue"]#風速
+    WD02 = content["records"]["location"][0]["weatherElement"][1]["elementValue"]#風向
+
+    print("站號:",Stno)
+    print("時間:",Datetime)
+    print("氣壓:",PS01)
+    print("溫度:",TX01)
+    print("風速:",WD01)
+    print("風向:",WD02)
+    
+def st_2(name): #環保署資料產生器
+
+    nu = 0
+    el = ["NO2","PM10","O3","CO","SO2"]
+    elnu = 0
+    li = []
+    li2 = {}# 數值的dict
+    
+    #時間處理 資料更新速度不是及時，所以我設定會延遲兩小時
+    ti = time.strftime("%Y-%m-%d %H:00", time.localtime()) 
+    if (int(time.strftime("%H", time.localtime())))>19:
+        ti = time.strftime("%Y-%m-%d 18:00", time.localtime()) 
+    elif (int(time.strftime("%H", time.localtime())))<9:
+        ti = time.strftime("%Y-%m-%d 10:00", time.localtime()) 
+    else: ti = (datetime.datetime.now()+datetime.timedelta(hours=-2)).strftime("%Y-%m-%d %H:00")
+        
+    URL = 'https://data.epa.gov.tw/api/v2/aqx_p_136?api_key=cb614fe9-0180-43fb-904e-1c43b71ca4f9'
+    res = requests.get(URL)
+    content = res.json()
+    
+    for i in range(len(content["records"])):
+        if content["records"][i]["sitename"] == name and content["records"][i]["monitordate"] == ti:#時間調整
+            li.append(content["records"][i])
+            i+=1
+        else: i+=1
+    for i in range(len(li)):
+        if li[i]["itemengname"] ==el[elnu]:
+            print(li[i]["itemname"],":",li[i]["concentration"])
+            li2[li[i]["itemengname"]] = float(li[i]["concentration"])
+            elnu+=1
+            i+=1
+        else: i+=1
+            
+    if li2=={}:
+        print("環保局無此測站資料")
+        
+st()
+st_2(name)
+Execution output
+0KB
+	Stream
+		輸入站名松山
+		站號: C0AH70
+		時間: 2022-06-05 20:00:00
+		氣壓: 998.5
+		溫度: 30.9
+		風速: 3.4
+		風向: 257
+		環保局無此測站資料
+
+Code cell <undefined>
+# %% [code]
+
+
